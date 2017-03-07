@@ -90,3 +90,7 @@ ENV/
 
 # Configuration stuff
 config.json
+/videos
+/images
+images/
+videos/
