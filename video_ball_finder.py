@@ -6,6 +6,8 @@ import json
 import numpy as np
 
 from collections import deque
+from os import listdir
+from os.path import isfile, join
 
 file_directory = "config.json"
 try:
@@ -18,21 +20,83 @@ video_path = config_['video_path']
 cap = cv2.VideoCapture(video_path)
 
 colors = config_['colors']['ball']
-has_alien = config_.get('alien')
+feature = config_.get('feature')
 lower_color = np.array(colors[0])
 upper_color = np.array(colors[1])
-counter = 0
 center = [0, 0]
+
+if feature:
+    if feature == 'ronaldinho':
+        path_ = 'others/ronaldinho/'
+        feat_image = [
+            path_ + f for f in listdir(path_) if (
+                isfile(join(path_, f)) and f.endswith(".jpg"))
+        ]
+        feat_image = sorted(feat_image)
+    elif feature == 'alien':
+        feat_image = "others/ufo.png"
+    else:
+        print 'feature not found try these guys[alien, ronaldinho]'
+        feature = None
 
 point_buffer = 64
 points = deque(maxlen=point_buffer)
 
+ronaldinho_frame_counter = 0
+ronaldinho_frame_time_counter = 0
+ronaldinho_frame_time_map = json.loads(open('others/ronaldinho/ronaldinho.json').read())
 writer = None
 
 
 def get_points(a, b, x_):
     y_ = x_ * a + b
     return int(x_), int(y_)
+
+
+def add_alien(center, frame):
+    s_img = cv2.imread(feat_image)
+    s_img = cv2.resize(s_img, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_CUBIC)
+    try:
+        offset_x = center[1]
+        offset_y = center[0]
+        # GAMBI para fazer a camada "alfa" funcionar para o png.
+        for x_ in range(0, s_img.shape[0]):
+            for y_ in range(0, s_img.shape[1]):
+                if not (s_img[x_, y_] == [255, 255, 255]).all():
+                    frame[
+                        offset_x - s_img.shape[0] / 2 + x_,
+                        offset_y - s_img.shape[1] / 2 + y_
+                    ] = s_img[x_, y_]
+    except Exception:
+        return frame
+
+    return frame
+
+
+def add_ronaldinho(center, frame):
+    global ronaldinho_frame_counter
+    global ronaldinho_frame_time_counter
+
+    s_img = cv2.imread(feat_image[ronaldinho_frame_counter % len(feat_image)])
+    s_img = cv2.resize(s_img, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
+
+    try:
+        offset_x = center[1]
+        offset_y = center[0]
+        # GAMBI para fazer a camada "alfa" funcionar para o png.
+        for x_ in range(0, s_img.shape[0]):
+            for y_ in range(0, s_img.shape[1]):
+                if not (s_img[x_, y_] == [254, 0, 0]).all():
+                    frame[
+                        offset_x - s_img.shape[0] / 2 + x_,
+                        offset_y - s_img.shape[1] / 2 + y_
+                    ] = s_img[x_, y_]
+    except Exception:
+        return frame
+
+    ronaldinho_frame_counter += 1
+    ronaldinho_frame_time_counter += 1
+    return frame
 
 
 while True:
@@ -51,10 +115,8 @@ while True:
         writer = cv2.VideoWriter('out/video.avi', four_cc, 40, (w, h), True)
         zeros = np.zeros((h, w), dtype="uint8")
 
-    # Convert BGR to HSV
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # Threshold the HSV image to get only blue colors
     mask = cv2.inRange(frame, lower_color, upper_color)
 
     im_orange = frame.copy()
@@ -102,20 +164,15 @@ while True:
                 (0, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
                 0.35, (0, 0, 255), 1)
 
-    if center and has_alien:
-        s_img = cv2.imread("others/ufo.png")
-        s_img = cv2.resize(s_img, None, fx=0.125, fy=0.125, interpolation=cv2.INTER_CUBIC)
-        try:
-            offset_x = center[1]
-            offset_y = center[0]
-            frame[offset_x:offset_x + s_img.shape[0], offset_y:offset_y + s_img.shape[1]] = s_img
-        except Exception:
-            pass
+    if center and feature:
+        if feature == 'alien':
+            frame = add_alien(center, frame)
+        elif feature == 'ronaldinho':
+            frame = add_ronaldinho(center, frame)
 
     cv2.imshow('frame', frame)
     writer.write(frame)
 
-    counter += 1
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
