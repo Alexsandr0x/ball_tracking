@@ -39,6 +39,7 @@ while True:
     # Take each frame
     _, frame = cap.read()
     frame = imutils.resize(frame, width=600)
+
     # Convert BGR to HSV
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
