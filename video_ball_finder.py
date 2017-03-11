@@ -109,7 +109,6 @@ while True:
         (h, w) = frame.shape[:2]
         four_cc = cv2.VideoWriter_fourcc(*'MJPG')
         writer = cv2.VideoWriter('out/video.avi', four_cc, 40, (w, h), True)
-        zeros = np.zeros((h, w), dtype="uint8")
 
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
