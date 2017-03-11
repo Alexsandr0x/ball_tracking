@@ -1,9 +1,11 @@
-from collections import deque
+# coding=utf-8
 
 import cv2
-import imutils
 import json
+
 import numpy as np
+
+from collections import deque
 
 file_directory = "config.json"
 try:
@@ -12,32 +14,42 @@ except Exception as error:
     raise error
 
 video_path = config_['video_path']
-cap = cv2.VideoCapture(video_path)
 
-fps = cap.get(cv2.CAP_PROP_FPS)
+cap = cv2.VideoCapture(video_path)
 
 colors = config_['colors']['ball']
 has_alien = config_.get('alien')
 lower_color = np.array(colors[0])
 upper_color = np.array(colors[1])
 counter = 0
-speed = None
-dx = None
-dy = None
-center = None
+center = [0, 0]
 
 point_buffer = 64
 points = deque(maxlen=point_buffer)
+
+writer = None
 
 
 def get_points(a, b, x_):
     y_ = x_ * a + b
     return int(x_), int(y_)
 
+
 while True:
+
     # Take each frame
     _, frame = cap.read()
-    frame = imutils.resize(frame, width=600)
+    # frame = imutils.resize(frame, width=600)
+    if frame is None:
+        break
+
+    if writer is None:
+        # store the image dimensions, initialzie the video writer,
+        # and construct the zeros array
+        (h, w) = frame.shape[:2]
+        four_cc = cv2.VideoWriter_fourcc(*'MJPG')
+        writer = cv2.VideoWriter('out/video.avi', four_cc, 40, (w, h), True)
+        zeros = np.zeros((h, w), dtype="uint8")
 
     # Convert BGR to HSV
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -86,15 +98,8 @@ while True:
 
             break
 
-    if len(points) > fps:
-        speed = (np.array(points[0]) - np.array(points[1]))
-
-    cv2.putText(frame, "dx: {}, dy: {}".format(dx, dy),
+    cv2.putText(frame, "x: {}, y: {}".format(center[0], center[1]),
                 (0, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
-                0.35, (0, 0, 255), 1)
-
-    cv2.putText(frame, "fps: {}".format(fps),
-                (0, 10), cv2.FONT_HERSHEY_SIMPLEX,
                 0.35, (0, 0, 255), 1)
 
     if center and has_alien:
@@ -104,13 +109,16 @@ while True:
             offset_x = center[1]
             offset_y = center[0]
             frame[offset_x:offset_x + s_img.shape[0], offset_y:offset_y + s_img.shape[1]] = s_img
-        except:
+        except Exception:
             pass
 
     cv2.imshow('frame', frame)
+    writer.write(frame)
+
     counter += 1
     k = cv2.waitKey(5) & 0xFF
     if k == 27:
         break
 
 cv2.destroyAllWindows()
+writer.release()
