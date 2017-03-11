@@ -43,8 +43,6 @@ point_buffer = 64
 points = deque(maxlen=point_buffer)
 
 ronaldinho_frame_counter = 0
-ronaldinho_frame_time_counter = 0
-ronaldinho_frame_time_map = json.loads(open('others/ronaldinho/ronaldinho.json').read())
 writer = None
 
 
@@ -59,7 +57,7 @@ def add_alien(center, frame):
     try:
         offset_x = center[1]
         offset_y = center[0]
-        # GAMBI para fazer a camada "alfa" funcionar para o png.
+        # GAMBI para fazer a camada "alfa" funcionar.
         for x_ in range(0, s_img.shape[0]):
             for y_ in range(0, s_img.shape[1]):
                 if not (s_img[x_, y_] == [255, 255, 255]).all():
@@ -75,15 +73,14 @@ def add_alien(center, frame):
 
 def add_ronaldinho(center, frame):
     global ronaldinho_frame_counter
-    global ronaldinho_frame_time_counter
 
     s_img = cv2.imread(feat_image[ronaldinho_frame_counter % len(feat_image)])
-    s_img = cv2.resize(s_img, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
+    s_img = cv2.resize(s_img, None, fx=0.40, fy=0.40, interpolation=cv2.INTER_CUBIC)
 
     try:
         offset_x = center[1]
         offset_y = center[0]
-        # GAMBI para fazer a camada "alfa" funcionar para o png.
+        # GAMBI para fazer a camada "alfa" funcionar.
         for x_ in range(0, s_img.shape[0]):
             for y_ in range(0, s_img.shape[1]):
                 if not (s_img[x_, y_] == [254, 0, 0]).all():
@@ -95,7 +92,6 @@ def add_ronaldinho(center, frame):
         return frame
 
     ronaldinho_frame_counter += 1
-    ronaldinho_frame_time_counter += 1
     return frame
 
 

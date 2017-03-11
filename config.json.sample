@@ -1,6 +1,9 @@
 {
-  "video_path": "",
+  "video_path": "videos/v4.mp4",
+  "image_path": ["images/p1.jpg", "images/p2.jpg", "images/p3.jpg", "images/p4.jpg", "images/p5.jpg"],
   "colors": {
-    "ball": [[7, 180, 180], [11, 255, 255]]
-  }
+    "ball": [[6, 5, 100], [75, 80, 255]],
+    "ball_jpg": [[2, 160, 160], [11, 255, 200]]
+  },
+  "feature": None
 }
